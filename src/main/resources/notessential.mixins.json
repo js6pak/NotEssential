@@ -1,0 +1,10 @@
+{
+  "package": "pl.js6pak.notessential.mixins",
+  "refmap": "notessential.mixins.refmap.json",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "ConnectionMixin",
+    "OnboardingDataMixin",
+    "PauseMenuDisplayMixin"
+  ]
+}

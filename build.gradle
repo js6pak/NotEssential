@@ -1,0 +1,118 @@
+plugins {
+    id "java"
+    id "com.github.johnrengelman.shadow" version "6.1.0"
+    id "net.minecraftforge.gradle.forge" version "ddb1eb0"
+    id 'org.spongepowered.mixin' version '0.6-SNAPSHOT'
+    id "de.undercouch.download" version "4.1.2"
+}
+
+version = "0.1.0"
+group = "pl.js6pak"
+archivesBaseName = "NotEssential"
+
+sourceCompatibility = targetCompatibility = 1.8
+compileJava.options.encoding = 'UTF-8'
+
+minecraft {
+    version = "1.8.9-11.15.1.2318-1.8.9"
+    runDir = "run"
+    mappings = "stable_22"
+    makeObfSourceJar = false
+
+    replace '@VERSION@', project.version
+
+    clientRunArgs += '--tweakClass org.spongepowered.asm.launch.MixinTweaker'
+    clientRunArgs += '--mixin notessential.mixins.json'
+}
+
+mixin {
+    add sourceSets.main, 'notessential.mixins.refmap.json'
+}
+
+configurations {
+    include
+    implementation.extendsFrom(include)
+}
+
+repositories {
+    maven {
+        name = 'SpongePowered'
+        url = 'https://repo.spongepowered.org/maven/'
+    }
+
+    maven {
+        name = 'JitPack'
+        url = 'https://jitpack.io/'
+    }
+
+    maven {
+        name = 'Sk1er Public'
+        url = 'https://repo.sk1er.club/repository/maven-public/'
+    }
+}
+
+def essentialJar = new File(buildDir, "Essential.jar")
+
+task downloadEssential() {
+    download {
+        // Taken from https://downloads.essential.gg/v1/mods/essential/essential/updates/stable/forge_1-8-9/
+        src 'https://cdn.essential.gg/mods/60ab95754d62e56e515c1b3c/610dd6389dba7e611c4f3681/forge_1-8-9.jar'
+        dest essentialJar
+    }
+
+    verifyChecksum {
+        src essentialJar
+        algorithm 'MD5'
+        checksum 'f16b144c13f22a189fe29c85cf98e122'
+    }
+}
+
+dependencies {
+    include 'gg.essential:loader-launchwrapper:1.1.0'
+    implementation files(essentialJar)
+
+    implementation 'org.spongepowered:mixin:0.7.11-SNAPSHOT'
+    annotationProcessor 'org.spongepowered:mixin:0.7.11-SNAPSHOT'
+}
+
+tasks.dependencies.dependsOn downloadEssential
+
+processResources {
+    // this will ensure that this task is redone when the versions change.
+    inputs.property "version", project.version
+    inputs.property "mcversion", project.minecraft.version
+
+    // replace stuff in mcmod.info, nothing else
+    from(sourceSets.main.resources.srcDirs) {
+        include 'mcmod.info'
+
+        // replace version and mcversion
+        expand 'version': project.version, 'mcversion': project.minecraft.version
+    }
+
+    // copy everything else, thats not the mcmod.info
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'mcmod.info'
+    }
+}
+
+jar {
+    manifest {
+        attributes(
+                "FMLCorePluginContainsFMLMod": "Yes, smh forge",
+                "TweakClass": "gg.essential.loader.stage0.EssentialSetupTweaker",
+                'MixinConfigs': 'notessential.mixins.json',
+        )
+    }
+}
+
+shadowJar {
+    archiveClassifier.set(null)
+    configurations = [project.configurations.include]
+}
+
+reobf {
+    shadowJar {}
+}
+
+tasks.build.dependsOn reobfShadowJar

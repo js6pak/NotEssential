@@ -1,0 +1,13 @@
+[
+  {
+    "modid": "notessential",
+    "name": "NotEssential",
+    "description": "Essential debloater",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "url": "https://github.com/js6pak/NotEssential",
+    "authorList": [
+      "js6pak"
+    ]
+  }
+]
